@@ -5,6 +5,7 @@ import os
 import json
 import ffmpeg
 import save_speakers as sasp
+from pprint import pprint
 
 SLEEP_TIME = 1 # プログラムの
 API_SERVER = "http://127.0.0.1:50032"
@@ -55,6 +56,9 @@ def append_audio(audio1: str, audio2: str):
     )
     os.remove(old_file)
 
+# def merge_audio_files(input: bytes, output_file: str):
+#     with open(output_file, "ab") as f:
+#         f.write(input)
 
 if __name__ == "__main__":
     # URLを入力
@@ -74,25 +78,43 @@ if __name__ == "__main__":
 
     # 使用できる声を取得
     sasp.save_speakers()
-    with open(SPEAKERS_FILE) as f:
+    with open(SPEAKERS_FILE, encoding="utf-8") as f:
         speakers = json.load(f)
-
     # 使用する声を選択
-    print("使用したい声を選んでください")
-    print("キャラクター名: ID")
+    print("声の一覧")
+    print(
+"""
+キャラクター名: UIID
+    スタイル名: style ID
+"""
+    )
     for speaker in speakers:
-        print("{0}: {1}".format(speaker["speakerName"], speaker["styles"]["styleId"]))
+        print("{0}: {1}".format(speaker["speakerName"], speaker["speakerUuid"]))
+        for style in speaker["styles"]:
+            print("    {0}: {1}".format(style["styleName"], style["styleId"]))
+    print("使用したい声を選んでください")
+    SPEAKER_UUID = input("UIID: ")
+    print("使用したいスタイルを選んでさい")
+    STYLE_ID = input("style ID: ")
 
-    STYLE_ID = input(input("ID: "))
 
-    print("読み上げを行います\n")
+    # print("読み上げを行います\n")
     time.sleep(SLEEP_TIME) # 1秒待つ
     count = 0
     lines = list(soup.stripped_strings)
+    lines = [i for i in lines if i != '~' and i != '.']
+    pprint(lines)
+
+    # line = lines[17]
+    # print(line)
+    # audio = synthesis('~')
+
+    audio_list = []
+    length = len(lines)
     for line in lines:
         # テキストの音声化
         audio = synthesis(line)
-
+        # audio_list.extend(audio)
         if count == 0:
             with open(OUTPUT_FILE, "wb") as f_temp:
                 f_temp.write(audio)
@@ -102,5 +124,23 @@ if __name__ == "__main__":
                 f_temp.write(audio)
             append_audio(OUTPUT_FILE, temp_file)
             os.remove(temp_file)
-
+        print("\r{0}/{1}".format(count + 1, length), end="")
+        time.sleep(1)
         count += 1
+
+
+    # for line in lines:
+    #     audio = synthesis(line)
+    #     if count == 0:
+    #         with open(OUTPUT_FILE, "wb") as f_temp:
+    #             f_temp.write(audio)
+
+    #     else:
+    #         merge_audio_files(audio, OUTPUT_FILE)
+    #     print("\r{0}/{1}".format(count + 1, length), end="")
+    #     time.sleep(1)
+    #     count += 1
+
+    
+    # merge_audio_files(audio_list, OUTPUT_FILE)
+    
